@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct CarsListView: View {
-    private let items = Array(0..<5)
+    private let items = Array(0...50)
     private let columns = [
         GridItem(.flexible()),
         GridItem(.flexible()),
