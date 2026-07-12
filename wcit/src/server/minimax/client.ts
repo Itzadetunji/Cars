@@ -1,4 +1,5 @@
 import type { ChatAssistantResponse } from '#/lib/api'
+import { normalizeAssistantPayload } from '#/lib/chat-response'
 import { CAR_BUYER_SYSTEM_PROMPT } from './system-prompt'
 
 const MINIMAX_API_URL = 'https://api.minimax.io/v1/text/chatcompletion_v2'
@@ -13,7 +14,7 @@ export type MiniMaxChatMessage = {
 
 type MiniMaxChoice = {
   message?: {
-    content?: string
+    content?: string | Record<string, unknown>
     reasoning_content?: string
   }
   finish_reason?: string
@@ -65,55 +66,19 @@ const responseJsonSchema = {
   },
 }
 
-function stripCodeFences(raw: string): string {
-  const trimmed = raw.trim()
-  const fenced = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i)
-  return fenced?.[1]?.trim() ?? trimmed
-}
+function toModelHistoryContent(
+  role: 'user' | 'assistant',
+  content: string,
+): string {
+  if (role === 'user') return content
 
-function parseAssistantPayload(raw: string): ChatAssistantResponse {
-  try {
-    const parsed = JSON.parse(stripCodeFences(raw)) as ChatAssistantResponse
-
-    if (
-      parsed &&
-      typeof parsed === 'object' &&
-      'success' in parsed &&
-      parsed.success === true &&
-      typeof parsed.message === 'string' &&
-      parsed.data &&
-      typeof parsed.data.message === 'string'
-    ) {
-      return parsed
-    }
-
-    if (
-      parsed &&
-      typeof parsed === 'object' &&
-      'success' in parsed &&
-      parsed.success === false &&
-      typeof parsed.message === 'string' &&
-      Array.isArray(parsed.errors)
-    ) {
-      return parsed
-    }
-
-    return {
-      success: true,
-      message: 'Assistant reply received',
-      data: {
-        message: typeof raw === 'string' && raw.trim() ? raw : '_No answer._',
-      },
-    }
-  } catch {
-    return {
-      success: true,
-      message: 'Assistant reply received',
-      data: {
-        message: raw.trim() || '_No answer._',
-      },
-    }
-  }
+  // Prior assistant turns stay in the required JSON shape so format does not drift.
+  // content here should already be markdown (UI unwraps envelopes before storing).
+  return JSON.stringify({
+    success: true,
+    message: 'Prior assistant reply',
+    data: { message: content },
+  })
 }
 
 export async function askCarAdvisor(input: {
@@ -133,8 +98,8 @@ export async function askCarAdvisor(input: {
   const messages: MiniMaxChatMessage[] = [
     { role: 'system', content: CAR_BUYER_SYSTEM_PROMPT },
     ...(input.history ?? []).map((item) => ({
-      role: item.role,
-      content: item.content,
+      role: item.role as ChatRole,
+      content: toModelHistoryContent(item.role, item.content),
     })),
     { role: 'user', content: input.message },
   ]
@@ -176,17 +141,5 @@ export async function askCarAdvisor(input: {
     }
   }
 
-  const content = payload.choices?.[0]?.message?.content
-  if (!content?.trim()) {
-    return {
-      success: true,
-      message: 'No model content returned',
-      data: {
-        message:
-          '_I could not generate an answer yet. Please share the car make, model, year, and your budget so I can help._',
-      },
-    }
-  }
-
-  return parseAssistantPayload(content)
+  return normalizeAssistantPayload(payload.choices?.[0]?.message?.content)
 }

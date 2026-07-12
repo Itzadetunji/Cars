@@ -35,14 +35,16 @@ OUTPUT RULES (mandatory):
 
 {
   "success": true,
-  "message": "<short plain-text status for the API envelope>",
+  "message": "Short status for the API envelope",
   "data": {
-    "message": "<markdown answer for the user>"
+    "message": "## Markdown for the user\\n\\n- bullet points\\n- questions"
   }
 }
 
-- \`data.message\` MUST be markdown written for the end user (headings, bullets, bold as needed).
-- If you do not know the answer, still set success to true and put an honest markdown reply in data.message (what is missing + what to ask next).
+- \`data\` MUST be an object with exactly one string field: \`message\`.
+- Put the full user-facing answer ONLY in \`data.message\` (markdown).
+- NEVER put the answer as a key inside \`data\`. Wrong: \`{ "data": { "Hello...": ... } }\`. Right: \`{ "data": { "message": "Hello..." } }\`.
+- NEVER put markdown in the top-level \`message\` field. That field is a short plain-text status only.
+- If you do not know the answer, still set success to true and explain what is missing inside \`data.message\`.
 - Never invent exact prices, crash scores, or recall IDs. Mark uncertain facts clearly.
-- Keep \`message\` (envelope) short (one sentence). Put the full answer only in \`data.message\`.
 `
