@@ -14,7 +14,7 @@ struct CarsListItem: View {
         Button {
             
         } label: {
-            Text("Hello World")
+            Text("Hello World").font(SofiaFont.black(size: 16))
                 .frame(maxWidth: .infinity, minHeight: 100)
                 
         }
