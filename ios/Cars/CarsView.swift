@@ -4,20 +4,19 @@ import Playgrounds
 @main struct MyApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            CarsView()
         }
     }
 }
 
-struct ContentView: View {
+struct CarsView: View {
     var body: some View {
-        Text("Hello, world!")
-            .padding()
+        HomeView()
     }
 }
 
 #Preview {
-    ContentView()
+    CarsView()
 }
 
 #Playground {
