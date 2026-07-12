@@ -8,18 +8,27 @@
 import SwiftUI
 
 struct CarsListItem: View {
+    @Environment(\.colorScheme) private var colorScheme
+
     var body: some View {
         Button {
             
         } label: {
             Text("Hello World")
-                .frame(maxWidth: .infinity, minHeight: 80)
+                .frame(maxWidth: .infinity, minHeight: 100)
+                
         }
         .buttonStyle(.plain)
-        .padding(10)
-        .background(.white)
+        
+        .background(Color(.systemBackground))
         .cornerRadius(16)
-        .shadow(color: .black.opacity(0.12), radius: 6, x: 0, y: 2)
+        .shadow(
+            color: (colorScheme == .dark ? Color.white : Color.black).opacity(0.12),
+            radius: 2,
+            x: 0,
+            y: 2
+        )
+        .padding(.horizontal, 3)
             
     }
 }
