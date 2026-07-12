@@ -2,10 +2,12 @@ import { useEffect, useRef, useState } from 'react'
 import { useForm } from '@tanstack/react-form'
 import { useMutation } from '@tanstack/react-query'
 import { ArrowUp, Loader2 } from 'lucide-react'
+import Markdown from 'react-markdown'
 
 import { Button } from '#/components/ui/button'
 import { submitMessage } from '#/server/submit-message'
 import { cn } from '#/lib/utils'
+import type { ChatAssistantResponse } from '#/lib/api'
 
 type ChatMessage = {
   id: string
@@ -19,8 +21,11 @@ export function ChatPrompt() {
   const [messages, setMessages] = useState<ChatMessage[]>([])
 
   const mutation = useMutation({
-    mutationFn: async (message: string) => {
-      return submitMessage({ data: { message } })
+    mutationFn: async (input: {
+      message: string
+      history: Array<{ role: 'user' | 'assistant'; content: string }>
+    }) => {
+      return submitMessage({ data: input })
     },
   })
 
@@ -31,6 +36,8 @@ export function ChatPrompt() {
     onSubmit: async ({ value, formApi }) => {
       const message = value.message.trim()
       if (!message || mutation.isPending) return
+
+      const history = messages.map(({ role, content }) => ({ role, content }))
 
       setMessages((prev) => [
         ...prev,
@@ -44,17 +51,35 @@ export function ChatPrompt() {
       resizeTextarea()
 
       try {
-        const ok = await mutation.mutateAsync(message)
-        if (ok) {
+        const response = (await mutation.mutateAsync({
+          message,
+          history,
+        })) as ChatAssistantResponse
+
+        if (response.success) {
           setMessages((prev) => [
             ...prev,
             {
               id: crypto.randomUUID(),
               role: 'assistant',
-              content: 'true',
+              content: response.data.message,
             },
           ])
+          return
         }
+
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: crypto.randomUUID(),
+            role: 'assistant',
+            content: [
+              `**${response.message}**`,
+              '',
+              ...response.errors.map((error) => `- ${error}`),
+            ].join('\n'),
+          },
+        ])
       } catch {
         // Error UI handled via mutation state
       }
@@ -88,8 +113,8 @@ export function ChatPrompt() {
               I want to get a car
             </h1>
             <p className="text-muted-foreground max-w-md text-pretty text-sm md:text-base">
-              Ask anything about the car you want — features, trim, budget, or
-              what to look for next.
+              Tell me the car you’re considering — I’ll help with price,
+              reliability, safety, ownership costs, and how it compares.
             </p>
           </div>
         ) : (
@@ -103,13 +128,19 @@ export function ChatPrompt() {
             >
               <div
                 className={cn(
-                  'max-w-[85%] rounded-3xl px-4 py-3 text-sm leading-relaxed text-pretty',
+                  'max-w-[85%] rounded-3xl px-4 py-3 text-sm leading-relaxed',
                   message.role === 'user'
-                    ? 'bg-primary text-primary-foreground rounded-br-lg'
+                    ? 'bg-primary text-primary-foreground rounded-br-lg text-pretty'
                     : 'bg-muted text-foreground rounded-bl-lg',
                 )}
               >
-                {message.content}
+                {message.role === 'user' ? (
+                  message.content
+                ) : (
+                  <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-2 prose-headings:mb-2 prose-headings:mt-3 prose-ul:my-2 prose-li:my-0.5">
+                    <Markdown>{message.content}</Markdown>
+                  </div>
+                )}
               </div>
             </div>
           ))
@@ -154,7 +185,7 @@ export function ChatPrompt() {
                     name={field.name}
                     value={field.state.value}
                     rows={1}
-                    placeholder="Message about the car…"
+                    placeholder="e.g. Toyota Camry 2022 — is it worth buying?"
                     aria-label="Message"
                     className="placeholder:text-muted-foreground max-h-[200px] min-h-12 w-full resize-none bg-transparent px-3 py-3 text-base leading-6 outline-none md:text-sm"
                     onBlur={field.handleBlur}
