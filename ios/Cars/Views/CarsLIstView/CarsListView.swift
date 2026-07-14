@@ -10,7 +10,7 @@ import SwiftUI
 struct CarsListView: View {
     @State private var selectedCar: CarModel?
 
-    private let cars = sampleCars
+    @State private var cars = sampleCars
     private let columns = [
         GridItem(.flexible(), spacing: 12),
         GridItem(.flexible(), spacing: 12),
