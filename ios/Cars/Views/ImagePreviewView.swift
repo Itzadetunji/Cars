@@ -9,12 +9,19 @@ import SwiftUI
 import UIKit
 
 struct ImagePreviewView: View {
+    /// Already-extracted (or fallback) image — never the in-progress original.
     var image: UIImage
 
     var body: some View {
-        Image(uiImage: image)
-            .resizable()
-            .scaledToFit()
+        ZStack {
+            Color(.secondarySystemBackground)
+                .ignoresSafeArea()
+
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFit()
+                .padding()
+        }
     }
 }
 

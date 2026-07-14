@@ -9,7 +9,7 @@ import SwiftUI
 import UIKit
 
 struct BodyImage: Identifiable {
-//    Sheet needs items to conform to identifiable so that's why we are doing this
+    // Sheet needs items to conform to Identifiable
     let id = UUID()
     let image: UIImage
 }
@@ -17,6 +17,7 @@ struct BodyImage: Identifiable {
 struct CameraViewButton: View {
     @State private var isShowingCamera = false
     @State private var isCameraUnavailable = false
+    @State private var isExtracting = false
     @State private var imageSelected: BodyImage?
 
     var body: some View {
@@ -41,7 +42,7 @@ struct CameraViewButton: View {
         }
         .fullScreenCover(isPresented: $isShowingCamera) {
             CustomCameraView { image in
-                imageSelected = BodyImage(image: image)
+                beginExtraction(from: image)
             }
             .ignoresSafeArea()
         }
@@ -52,6 +53,44 @@ struct CameraViewButton: View {
         }
         .sheet(item: $imageSelected) { selected in
             ImagePreviewView(image: selected.image)
+        }
+        .overlay {
+            if isExtracting {
+                ZStack {
+                    Color.black.opacity(0.45)
+                        .ignoresSafeArea()
+
+                    VStack(spacing: 14) {
+                        ProgressView()
+                            .controlSize(.large)
+                            .tint(.white)
+
+                        Text("Extracting subject…")
+                            .font(SofiaFont.medium(size: 15))
+                            .foregroundStyle(.white)
+                    }
+                    .padding(24)
+                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+                }
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel("Extracting subject")
+            }
+        }
+    }
+
+    private func beginExtraction(from image: UIImage) {
+        isExtracting = true
+
+        Task {
+            defer { isExtracting = false }
+
+            do {
+                let extracted = try await SubjectExtractor.extractSubject(from: image)
+                imageSelected = BodyImage(image: extracted)
+            } catch {
+                // Extraction failed — still open preview with the original as a fallback.
+                imageSelected = BodyImage(image: image)
+            }
         }
     }
 }
