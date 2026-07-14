@@ -8,7 +8,9 @@
 import SwiftUI
 
 struct CarsListView: View {
-    private let items = Array(0...50)
+    @State private var selectedCar: CarModel?
+
+    private let cars = sampleCars
     private let columns = [
         GridItem(.flexible(), spacing: 12),
         GridItem(.flexible(), spacing: 12),
@@ -17,12 +19,17 @@ struct CarsListView: View {
     var body: some View {
         ScrollView {
             LazyVGrid(columns: columns, spacing: 12) {
-                ForEach(items, id: \.self) { _ in
-                    CarsListItem()
+                ForEach(cars) { car in
+                    CarsListItem(carData: car, onTap: {
+                        selectedCar = car
+                    })
                 }
             }
         }
         .padding(.horizontal)
+        .sheet(item: $selectedCar) { car in
+            CarView(carData: car)
+        }
     }
 }
 
