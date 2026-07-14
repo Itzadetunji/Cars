@@ -40,7 +40,7 @@ struct CameraViewButton: View {
             .accessibilityLabel("Open camera")
         }
         .fullScreenCover(isPresented: $isShowingCamera) {
-            CameraPicker { image in
+            CustomCameraView { image in
                 imageSelected = BodyImage(image: image)
             }
             .ignoresSafeArea()
