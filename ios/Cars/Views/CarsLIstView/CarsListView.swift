@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct CarsListView: View {
-    @State private var selectedCar: CarModel?
+    @State private var selectedCar: CarModel? = sampleCar
 
     @State private var cars = sampleCars
     private let columns = [
