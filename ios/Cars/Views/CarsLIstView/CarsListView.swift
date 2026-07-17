@@ -19,17 +19,22 @@ struct CarsListView: View {
     var body: some View {
         ScrollView {
             LazyVGrid(columns: columns, spacing: 12) {
-                
+
                 ForEach(cars) { car in
-                    CarsListItem(carData: car, onTap: {
-                        selectedCar = car
-                    })
+                    CarsListItem(
+                        carData: car,
+                        onTap: {
+                            selectedCar = car
+                        }
+                    )
                 }
             }
         }
         .padding(.horizontal)
         .sheet(item: $selectedCar) { car in
             CarView(carData: car)
+                .presentationDetents([.fraction(0.5), .large])
+                .presentationDragIndicator(.visible)
         }
     }
 }
