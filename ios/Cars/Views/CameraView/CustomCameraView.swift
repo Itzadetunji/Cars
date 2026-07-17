@@ -30,6 +30,23 @@ struct CustomCameraView: View {
                 .onDisappear { camera.stop() }
 
             VStack {
+
+                HStack {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(.white)
+                            .frame(width: 40, height: 40)
+                            
+                    }
+                    .buttonStyle(.glass)
+                    .buttonBorderShape(.circle)
+                    .padding(.leading)
+                    Spacer()
+                }
+
                 Spacer()
 
                 ZStack {
@@ -60,7 +77,10 @@ struct CustomCameraView: View {
                             camera.toggleZoom()
                         } label: {
                             Text(camera.zoomLabel)
-                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                .frame(
+                                    maxWidth: .infinity,
+                                    maxHeight: .infinity
+                                )
                         }
                         .frame(width: 64, height: 64)
                         .buttonStyle(.glass)
