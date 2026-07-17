@@ -18,3 +18,6 @@ struct CarView: View {
 #Preview {
     CarView(carData: sampleCar)
 }
+
+
+

@@ -20,6 +20,9 @@ struct CarsListItem: View {
                     .frame(maxWidth: .infinity)
                     .padding(10)
 
+                Text(String(format: "#%03d", carData.itemId)).font(
+                    SofiaFont.semiBold(size: 14)
+                ).foregroundStyle(Color.secondary)
 
                 Text(carData.name)
                     .font(SofiaFont.black(size: 16))
@@ -32,7 +35,7 @@ struct CarsListItem: View {
 
     @ViewBuilder
     private var carImage: some View {
-        AsyncStickerImage(url: URL(string: carData.imageUrl),borderWidth: 30 )
+        AsyncStickerImage(url: URL(string: carData.imageUrl), borderWidth: 30)
             .frame(maxHeight: 100)
     }
 }

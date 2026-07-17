@@ -9,9 +9,12 @@ import SwiftUI
 
 struct HomeView: View {
     var body: some View {
-        ZStack{
-            CarsListView()
-            CameraViewButton()
+        VStack {
+            //            LatestCarView()
+            ZStack {
+                CarsListView()
+                CameraViewButton()
+            }
         }
     }
 }
