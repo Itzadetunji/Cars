@@ -45,7 +45,6 @@ struct CameraViewButton: View {
             CustomCameraView { image in
                 beginExtraction(from: image)
             }
-            .ignoresSafeArea()
         }
         .alert("Camera Unavailable", isPresented: $isCameraUnavailable) {
             Button("OK", role: .cancel) {}

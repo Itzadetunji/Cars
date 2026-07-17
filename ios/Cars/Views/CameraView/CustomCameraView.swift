@@ -39,7 +39,7 @@ struct CustomCameraView: View {
                             .font(.system(size: 16, weight: .semibold))
                             .foregroundStyle(.white)
                             .frame(width: 40, height: 40)
-                            
+
                     }
                     .buttonStyle(.glass)
                     .buttonBorderShape(.circle)
@@ -89,8 +89,7 @@ struct CustomCameraView: View {
                     }
                     .padding(.trailing, 16)
                 }
-            }
-            .padding(.bottom, 64)
+            }.padding(.vertical, 32)
         }
     }
 
@@ -100,7 +99,9 @@ struct CustomCameraView: View {
                 if zoomAtPinchStart == nil {
                     zoomAtPinchStart = camera.zoomFactor
                 }
-                camera.setZoom((zoomAtPinchStart ?? 1) * value.magnification)
+                
+                let magnifyBy = (zoomAtPinchStart ?? 1) * value.magnification
+                camera.setZoom(magnifyBy > 10 ? 10 : magnifyBy)
             }
             .onEnded { _ in
                 zoomAtPinchStart = nil
