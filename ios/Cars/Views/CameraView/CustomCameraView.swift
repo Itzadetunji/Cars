@@ -58,12 +58,12 @@ struct CustomCameraView: View {
           Image(systemName: "xmark")
             .font(.system(size: 16, weight: .semibold))
             .foregroundStyle(.white)
-            .frame(width: 40, height: 40)
+            .frame(width: 54, height: 54)
         }
         .buttonStyle(.plain)
         .background(.black.opacity(0.45), in: Circle())
         .padding(.leading)
-        .frame(width: 40, height: 40)
+        
         Spacer()
       }
 
