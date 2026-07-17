@@ -31,13 +31,14 @@ struct CameraViewButton: View {
                     isCameraUnavailable = true
                 }
             } label: {
-                Image(systemName: "camera")
-                    .foregroundStyle(.background)
+                Image(systemName: "camera.fill")
+                    .frame(width: 50, height: 50)
+                    
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.glassProminent)
+            .tint(.Primary)
+            .buttonBorderShape(.circle)
             .frame(width: 60, height: 60)
-            .background(.foreground)
-            .clipShape(.rect(cornerRadius: .infinity))
             .accessibilityLabel("Open camera")
         }
         .fullScreenCover(isPresented: $isShowingCamera) {

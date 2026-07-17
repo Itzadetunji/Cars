@@ -16,6 +16,7 @@ struct CustomCameraView: View {
     @State private var camera = CameraModel()  // AVFoundation wrapper
     @State private var photoItem: PhotosPickerItem?
     @State private var showLibrary = false
+    @State private var zoomAtPinchStart: CGFloat?
 
     var body: some View {
         ZStack {
@@ -24,6 +25,7 @@ struct CustomCameraView: View {
 
             CameraPreview(session: camera.session)  // full-bleed live feed
                 .ignoresSafeArea()
+                .gesture(pinchZoomGesture)
                 .task { await camera.start() }
                 .onDisappear { camera.stop() }
 
@@ -51,31 +53,38 @@ struct CustomCameraView: View {
                     .frame(width: 64, height: 64)
                     .accessibilityLabel("Capture")
 
-                    // Gallery pinned 16pt from the left
                     HStack {
-                        PhotosPicker(selection: $photoItem, matching: .images) {
-                            Image(systemName: "photo")
-                                .font(.system(size: 24))
-                                .foregroundStyle(.black)
-                                .frame(width: 64, height: 64)
-                        }
-                        .background(.white, in: Circle())
-                        .onChange(of: photoItem) { item in
-                            Task {
-                                if let image = await item?.loadUIImage() {
-                                    onImageReady(image)
-                                    dismiss()
-                                }
-                            }
-                        }
-
                         Spacer()
+
+                        Button {
+                            camera.toggleZoom()
+                        } label: {
+                            Text(camera.zoomLabel)
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        }
+                        .frame(width: 64, height: 64)
+                        .buttonStyle(.glass)
+                        .accessibilityLabel("Toggle zoom")
+                        .accessibilityValue(camera.zoomLabel)
                     }
-                    .padding(.leading, 32)
+                    .padding(.trailing, 16)
                 }
             }
             .padding(.bottom, 64)
         }
+    }
+
+    private var pinchZoomGesture: some Gesture {
+        MagnifyGesture()
+            .onChanged { value in
+                if zoomAtPinchStart == nil {
+                    zoomAtPinchStart = camera.zoomFactor
+                }
+                camera.setZoom((zoomAtPinchStart ?? 1) * value.magnification)
+            }
+            .onEnded { _ in
+                zoomAtPinchStart = nil
+            }
     }
 }
 

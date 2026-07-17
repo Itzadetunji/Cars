@@ -22,7 +22,7 @@ struct CarsListItem: View {
 
                 VStack(spacing: -2) {
                     Text(String(format: "#%03d", carData.itemId)).font(
-                        SofiaFont.semiBold(size: 14) 
+                        SofiaFont.semiBold(size: 14)
                     ).foregroundStyle(Color.secondary)
 
                     Text(carData.name)

@@ -19,11 +19,25 @@ final class CameraModel {
     private var photoDelegate: PhotoCaptureDelegate?
 
     private(set) var isRunning = false
+    /// Zoom factor shown in the UI (0.5×, 1.0×, 2.2×, …), not raw `videoZoomFactor`.
     private(set) var zoomFactor: CGFloat = 1
     var errorMessage: String?
 
     var zoomLabel: String {
-        String(format: "%.0fx", zoomFactor)
+        String(format: "%.1fx", zoomFactor)
+    }
+
+    /// Smallest zoom the UI can show (typically 0.5× on ultra-wide devices).
+    var minZoomFactor: CGFloat {
+        guard let device else { return 1 }
+        return device.minAvailableVideoZoomFactor * device.displayVideoZoomFactorMultiplier
+    }
+
+    /// Largest zoom the UI can show.
+    var maxZoomFactor: CGFloat {
+        guard let device else { return 1 }
+        let maxVideo = min(device.maxAvailableVideoZoomFactor, device.activeFormat.videoMaxZoomFactor)
+        return maxVideo * device.displayVideoZoomFactorMultiplier
     }
 
     func start() async {
@@ -35,9 +49,7 @@ final class CameraModel {
 
         do {
             try await configureSession()
-            sessionQueue.async { [session] in
-                session.startRunning()
-            }
+            await startRunningAndApplyDefaultZoom()
             isRunning = true
         } catch {
             errorMessage = error.localizedDescription
@@ -67,24 +79,38 @@ final class CameraModel {
         }
     }
 
+    /// Toggles between 1× and ultra-wide (0.5× when available).
+    /// At 1× or above → go to minimum. Below 1× → return to 1×.
     func toggleZoom() {
+        let nextZoom: CGFloat = zoomFactor < 1 ? 1 : minZoomFactor
+        setZoom(nextZoom, animated: true)
+    }
+
+    /// Sets zoom using the display factor (what the label shows).
+    func setZoom(_ displayFactor: CGFloat, animated: Bool = false) {
         guard let device else { return }
 
-        let nextZoom: CGFloat
-        switch zoomFactor {
-        case ..<1.5:
-            nextZoom = min(2, device.activeFormat.videoMaxZoomFactor)
-        case ..<2.5:
-            nextZoom = min(3, device.activeFormat.videoMaxZoomFactor)
-        default:
-            nextZoom = 1
-        }
+        let multiplier = max(device.displayVideoZoomFactorMultiplier, 0.0001)
+        let videoZoom = displayFactor / multiplier
+        let minVideo = device.minAvailableVideoZoomFactor
+        let maxVideo = min(device.maxAvailableVideoZoomFactor, device.activeFormat.videoMaxZoomFactor)
+        let clampedVideo = min(max(videoZoom, minVideo), maxVideo)
+        let clampedDisplay = clampedVideo * multiplier
+
+        guard abs(clampedDisplay - zoomFactor) > 0.001 else { return }
 
         do {
             try device.lockForConfiguration()
-            device.videoZoomFactor = nextZoom
+            if device.isRampingVideoZoom {
+                device.cancelVideoZoomRamp()
+            }
+            if animated {
+                device.ramp(toVideoZoomFactor: clampedVideo, withRate: 8)
+            } else {
+                device.videoZoomFactor = clampedVideo
+            }
             device.unlockForConfiguration()
-            zoomFactor = nextZoom
+            zoomFactor = clampedDisplay
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -112,9 +138,8 @@ final class CameraModel {
                 session.inputs.forEach { session.removeInput($0) }
                 session.outputs.forEach { session.removeOutput($0) }
 
-                guard
-                    let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back)
-                else {
+                // Prefer multi-camera so display zoom can go below 1× (ultra-wide / 0.5×).
+                guard let device = Self.bestBackCamera() else {
                     continuation.resume(throwing: CameraError.cameraUnavailable)
                     return
                 }
@@ -140,7 +165,33 @@ final class CameraModel {
         }
 
         device = configuredDevice
-        zoomFactor = configuredDevice.videoZoomFactor
+        syncZoomFromDevice()
+    }
+
+    private func startRunningAndApplyDefaultZoom() async {
+        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+            sessionQueue.async { [session] in
+                session.startRunning()
+                continuation.resume()
+            }
+        }
+        // Apply after the session is running so the device accepts the wide (1×) factor.
+        setZoom(1)
+    }
+
+    private func syncZoomFromDevice() {
+        guard let device else { return }
+        zoomFactor = device.videoZoomFactor * device.displayVideoZoomFactorMultiplier
+    }
+
+    private static func bestBackCamera() -> AVCaptureDevice? {
+        if let triple = AVCaptureDevice.default(.builtInTripleCamera, for: .video, position: .back) {
+            return triple
+        }
+        if let dualWide = AVCaptureDevice.default(.builtInDualWideCamera, for: .video, position: .back) {
+            return dualWide
+        }
+        return AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back)
     }
 }
 
