@@ -39,12 +39,19 @@ struct CarView: View {
                     .frame(maxWidth: .infinity)
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(.horizontal, 8)
-                
+
                 CarBadgeView()
+
+                HStack (spacing: 8) {
+                    CarViewItem(carData: carData, informationType: .date)
+                    CarViewItem(carData: carData, informationType: .location)
+                    CarViewItem(carData: carData, informationType: .number)
+                }
             }
             Spacer()
         }.padding(.top, 40)
     }
+
 }
 
 #Preview {
