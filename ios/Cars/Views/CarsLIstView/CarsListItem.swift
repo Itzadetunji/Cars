@@ -19,12 +19,7 @@ struct CarsListItem: View {
                 carImage
                     .frame(maxWidth: .infinity)
                     .padding(10)
-                    .background {
-                        Image(.stamp1)
-                            .renderingMode(.template)
-                            .resizable()
-                            .foregroundStyle(.foreground)
-                    }
+
 
                 Text(carData.name)
                     .font(SofiaFont.black(size: 16))
@@ -37,24 +32,8 @@ struct CarsListItem: View {
 
     @ViewBuilder
     private var carImage: some View {
-        AsyncImage(url: URL(string: carData.imageUrl)) { phase in
-            switch phase {
-            case .empty:
-                ProgressView()
-                    .frame(maxWidth: .infinity, minHeight: 80)
-            case .success(let image):
-                image
-                    .resizable()
-                    .scaledToFit()
-            case .failure:
-                Image(.toyota)
-                    .resizable()
-                    .scaledToFit()
-            @unknown default:
-                EmptyView()
-            }
-        }.frame(maxHeight: 100)
-
+        AsyncStickerImage(url: URL(string: carData.imageUrl),borderWidth: 30 )
+            .frame(maxHeight: 100)
     }
 }
 

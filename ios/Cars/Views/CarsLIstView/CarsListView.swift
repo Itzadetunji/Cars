@@ -19,6 +19,7 @@ struct CarsListView: View {
     var body: some View {
         ScrollView {
             LazyVGrid(columns: columns, spacing: 12) {
+                
                 ForEach(cars) { car in
                     CarsListItem(carData: car, onTap: {
                         selectedCar = car
