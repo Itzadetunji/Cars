@@ -8,7 +8,8 @@
 import SwiftUI
 
 struct CarsListView: View {
-    @State private var selectedCar: CarModel? = sampleCar
+    @State private var selectedCar: CarModel?
+    @State private var activeDetent: PresentationDetent = .medium
 
     @State private var cars = sampleCars
     private let columns = [
@@ -32,8 +33,8 @@ struct CarsListView: View {
         }
         .padding(.horizontal)
         .sheet(item: $selectedCar) { car in
-            CarView(carData: car)
-                .presentationDetents([.fraction(0.5), .large])
+            CarView(carData: car, activeDetent: activeDetent)
+                .presentationDetents([.fraction(0.5), .large], selection: $activeDetent)
                 .presentationDragIndicator(.visible)
         }
     }

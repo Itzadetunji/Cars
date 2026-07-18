@@ -11,9 +11,17 @@ struct HomeView: View {
     var body: some View {
         VStack {
             //            LatestCarView()
+
             ZStack {
-                CarsListView()
-                CameraViewButton()
+                ZStack {
+                    CarsListView()
+                    CameraViewButton()
+                }
+                VStack {
+                    CarMenuView()
+                    Spacer()
+                }.padding(.top, 16)
+               
             }
         }
     }
